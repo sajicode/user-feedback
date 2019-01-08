@@ -9,8 +9,8 @@ import App from './components/App';
 import reducers from './reducers';
 
 // use this to test email send from backend
-// import axios from 'axios';
-// window.axios = axios;
+import axios from 'axios';
+window.axios = axios;
 
 const store = createStore(reducers, {}, applyMiddleware(reduxThunk));
 
