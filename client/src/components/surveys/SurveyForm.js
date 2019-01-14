@@ -38,7 +38,7 @@ function validate(values) {
 	// if (!values.title) {
 	// 	errors.title = 'You must provide a title';
 	// }
-	errors.emails = validateEmails(values.emails || '');
+	errors.recipients = validateEmails(values.recipients || '');
 
 	_.each(formFields, ({ name }) => {
 		if (!values[name]) {
