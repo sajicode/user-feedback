@@ -15,28 +15,29 @@ module.exports = (app) => {
 	});
 
 	app.post('/api/surveys/webhooks', (req, res) => {
-		const events = _.map(req.body, ({ email, url }) => {
-			// URL helps us extract just the route and not the domain
-			const pathname = new URL(url).pathname;
-			const p = new Path('/api/surveys/:surveyId/:choice');
-			const match = p.test(pathname);
-			// we cannot destructure match bcos match might return an object of required details or null
-			if (match) {
-				return {
-					email,
-					surveyId: match.surveyId,
-					choice: match.choice
-				};
-			}
-		});
+		const p = new Path('/api/surveys/:surveyId/:choice');
+		const events = _.chain(req.body)
+			.map(({ email, url }) => {
+				// URL helps us extract just the route and not the domain
+				const match = p.test(new URL(url).pathname);
+				// we cannot destructure match bcos match might return an object of required details or null
+				if (match) {
+					return {
+						email,
+						surveyId: match.surveyId,
+						choice: match.choice
+					};
+				}
+			})
+			// remove undefined events
+			.compact()
+			// remove duplicate records
+			.uniqBy('email', 'surveyId')
+			.value();
 
-		// remove undefined events
-		const compactEvents = _.compact(events);
+		console.log(events);
 
-		// remove duplicate records
-		const uniqueEvents = _.uniqBy(compactEvents, 'email', 'surveyId');
-
-		console.log(uniqueEvents);
+		res.send({});
 	});
 
 	app.post('/api/surveys', requireLogin, requireCredits, async (req, res) => {
