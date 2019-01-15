@@ -15,12 +15,28 @@ module.exports = (app) => {
 	});
 
 	app.post('/api/surveys/webhooks', (req, res) => {
-		const events = _.map(req.body, (event) => {
+		const events = _.map(req.body, ({ email, url }) => {
 			// URL helps us extract just the route and not the domain
-			const pathname = new URL(event.url).pathname;
+			const pathname = new URL(url).pathname;
 			const p = new Path('/api/surveys/:surveyId/:choice');
-			console.log(p.test(pathname));
+			const match = p.test(pathname);
+			// we cannot destructure match bcos match might return an object of required details or null
+			if (match) {
+				return {
+					email,
+					surveyId: match.surveyId,
+					choice: match.choice
+				};
+			}
 		});
+
+		// remove undefined events
+		const compactEvents = _.compact(events);
+
+		// remove duplicate records
+		const uniqueEvents = _.uniqBy(compactEvents, 'email', 'surveyId');
+
+		console.log(uniqueEvents);
 	});
 
 	app.post('/api/surveys', requireLogin, requireCredits, async (req, res) => {
