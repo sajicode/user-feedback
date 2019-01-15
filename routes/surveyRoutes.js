@@ -16,7 +16,7 @@ module.exports = (app) => {
 
 	app.post('/api/surveys/webhooks', (req, res) => {
 		const p = new Path('/api/surveys/:surveyId/:choice');
-		const events = _.chain(req.body)
+		_.chain(req.body)
 			.map(({ email, url }) => {
 				// URL helps us extract just the route and not the domain
 				const match = p.test(new URL(url).pathname);
@@ -33,9 +33,21 @@ module.exports = (app) => {
 			.compact()
 			// remove duplicate records
 			.uniqBy('email', 'surveyId')
+			.each(({ surveyId, email, choice }) => {
+				Survey.updateOne(
+					{
+						_id: surveyId,
+						recipients: {
+							$elemMatch: { email: email, responded: false }
+						}
+					},
+					{
+						$inc: { [choice]: 1 },
+						$set: { 'recipients.$.responded': true }
+					}
+				).exec();
+			})
 			.value();
-
-		console.log(events);
 
 		res.send({});
 	});
